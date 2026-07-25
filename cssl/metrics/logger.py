@@ -210,11 +210,11 @@ def get_loggers(config, data_manager):
         random_classifiers,
     )
 
-    plugin = "" if config.plugin=="" else f"_{config.plugin}"
+    plugin = "" if config.plugin=="" else f"_{config.plugin["name"]}"
     if not os.path.exists(f"logs/{config.model}_online_linear_{config.dataset}{plugin}_{config.num_tasks}"):
-        os.makedirs(f"logs/{config.model}_online_linear_{config.dataset}{plugin}_{config.num_tasks}")
-        os.makedirs(f"logs/{config.model}_knn_{config.dataset}{plugin}_{config.num_tasks}")
-        os.makedirs(f"logs/{config.model}_ncm_{config.dataset}{plugin}_{config.num_tasks}")
+        os.makedirs(f"logs/{config.model}_online_linear_{config.dataset}{plugin}_{config.num_tasks}", exist_ok=True)
+        os.makedirs(f"logs/{config.model}_knn_{config.dataset}{plugin}_{config.num_tasks}", exist_ok=True)
+        os.makedirs(f"logs/{config.model}_ncm_{config.dataset}{plugin}_{config.num_tasks}", exist_ok=True)
 
     loggers = {}
 

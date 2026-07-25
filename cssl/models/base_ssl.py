@@ -42,6 +42,7 @@ class BaseSSL(LightningModule):
         if self.config.use_knn_classifier:
             self.knn_classifier = KNNClassifier(
                 model=None,
+                config=config,
                 num_classes=self.config.num_classes,
                 knn_k=self.config.knn_neighbours,
                 knn_t=self.config.knn_temperature,
@@ -52,6 +53,7 @@ class BaseSSL(LightningModule):
         if self.config.use_ncm_classifier:
             self.ncm_classifier = NCMClassifier(
                 model=None,
+                config=config,
                 num_classes=self.config.num_classes,
                 logger=self.metrics_loggers["ncm"],
                 num_tasks=self.num_tasks

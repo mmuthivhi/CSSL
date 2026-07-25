@@ -49,12 +49,12 @@ class Evaluator:
                 )
 
                 trainer = pl.Trainer(
-                    max_epochs=self.config.train_epochs, 
+                    max_epochs=self.config.test_epochs, 
                     accelerator=self.config.accelerator,
                     devices=self.config.gpu_devices,
                     accumulate_grad_batches=self.config.train_accumulate_grad_batches,
                     callbacks=pretrain_callbacks,
-                    #logger=pretrain_wandb_logger,
+                    logger=pretrain_wandb_logger,
                     strategy=self.config.strategy,
                     precision=self.config.precision,
                     sync_batchnorm=self.config.sync_batchnorm,
@@ -67,8 +67,8 @@ class Evaluator:
                     val_dataloaders=test_classifier_loader
                 )
                 
-                # if self.config.wandb:
-                #     wandb.finish()
+                if self.config.wandb:
+                    wandb.finish()
          
         
         

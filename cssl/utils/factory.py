@@ -4,6 +4,9 @@ import lightly
 
 def get_model(backbone, config, loggers):
     name = config.model.lower()
+    if name == "classifier":
+        from cssl.models import OnlineLinearClassifier
+        Model = OnlineLinearClassifier
     if name == "simclr":
         from cssl.models import SimCLR
         Model = SimCLR
@@ -36,10 +39,10 @@ def get_model(backbone, config, loggers):
         Model = DINO
 
     if isinstance(config.plugin, str):
-        plugin_name = config.plugin.lower()
+        plugin_name = config.plugin["name"].lower()
         if plugin_name == "experience_replay":
             from cssl.plugins import experience_replay
-            Model = experience_replay(Model, config)
+            Model = experience_replay(Model)
 
     model = Model(backbone=backbone, config=config, loggers=loggers)
 
@@ -58,7 +61,15 @@ def get_backbone(name, dataset_name):
     return backbone
 
     
+def get_downstream_task(backbone, config, logger):
+    name = config.downstream.lower()
+    if name == "classifier":
+        from cssl.models import LinearClassifier
+        Model = LinearClassifier
 
+    model = Model(backbone=backbone, config=config, logger=logger)
+
+    return model
 
 def get_classifier(
     backbone, 

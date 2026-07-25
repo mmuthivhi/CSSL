@@ -1,0 +1,78 @@
+backbone: "resnet18"
+model: "SimCLR"
+split_strategy: "class"
+dataset: "cifar100"
+dataset_root: "data/"
+task: "classification"
+
+use_online_classifier: False
+use_knn_classifier: True
+use_ncm_classifier: True
+
+plugin: 
+  name: "experience_replay"
+  buffer_size: 500
+  minibatch_size: 32
+
+num_classes: 100
+num_tasks: 5
+seeds: [5]
+
+image_dim: 32
+feature_dim: 512
+hidden_dim: 2048
+output_dim: 256
+num_layers: 2
+projection_batchnorm: False
+
+train_batch_size: 256
+train_accumulate_grad_batches: 1
+train_epochs: 500
+
+optimizer:
+  name: "lars"
+  train_learning_rate: 0.4
+  classifier_learning_rate: 0.1
+  weight_decay: 1.0e-06
+  momentum: 0.9
+  trust_coefficient: 0.02
+  clip_lr: True
+
+loss:
+  name: "ntxent"
+  temperature: 0.2
+
+test_batch_size: 128
+test_accumulate_grad_batches: 1
+test_epochs: 100
+
+num_workers: 4
+set_float32_matmul_precision: "high"
+
+# Tracking
+wandb: True
+wandb_project: "CSSL"
+
+# Augmentations
+gaussian_blur: [0.0, 0.0]
+solarization: [0.0, 0.0]
+brightness: 0.8
+contrast: 0.8
+saturation: 0.8
+hue: 0.2
+
+# Classifier parameters
+knn_neighbours: 200
+knn_temperature: 0.1
+
+# overwrite Pytorch Lightening default
+num_devices: 1
+gpu_devices: [0]
+sync_batchnorm: True
+accelerator: "gpu"
+strategy: "auto"
+precision: 16-mixed
+check_val_every_n_epoch: 1
+
+# Hard defaults
+reference_batch_size: 256

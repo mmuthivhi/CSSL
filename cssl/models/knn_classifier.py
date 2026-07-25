@@ -16,7 +16,7 @@ class KNNClassifier(
     def __init__(self, *args, **kwargs):
         self.metrics_logger = kwargs.pop("logger", None)
         self.num_tasks = kwargs.pop("num_tasks", None)
-        self.config = kwargs.pop("config", None)
+        self.config = kwargs.pop("config")
         self.classifier_name = "KNN"
         super().__init__(*args, **kwargs)
 

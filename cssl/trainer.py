@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from lightly.models.utils import deactivate_requires_grad, activate_requires_grad
 
 from cssl.utils import DataManager, get_callbacks_logger, get_classifier
-from cssl.utils.factory import get_backbone, get_model
+from cssl.utils.factory import get_backbone, get_model, get_downstream_task
 from cssl.metrics.logger import get_loggers
 
 class Trainer:
@@ -74,17 +74,16 @@ class Trainer:
 
         _, classifier_wandb_logger = get_callbacks_logger(
             self.config, 
-            training_type="classifier", 
-            task_id=task_id, 
-            scenario_id=scenario_id, 
+            training_type=self.config.downstream, 
+            task_id=self.config.task_id, 
+            scenario_id=self.config.scenario_id, 
             project=self.config.wandb_project
         )
             
-        linear_classifier = get_classifier(
+        downstream_model = get_downstream_task(
             self.model.backbone, 
-            num_classes=self.config.num_classes,
-            logger=None,
-            args=self.config
+            config=self.config,
+            logger=self.loggers["linear"],
         )
             
         trainer = pl.Trainer(
@@ -98,7 +97,7 @@ class Trainer:
             sync_batchnorm=self.config.sync_batchnorm,
         )
         trainer.fit(
-             linear_classifier, 
+             downstream_model, 
              train_dataloaders=train_classifier_loader, val_dataloaders=test_classifier_loader)
         
         

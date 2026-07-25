@@ -1,19 +1,18 @@
 import torch
 from cssl.utils import Buffer
 
-def experience_replay(Base, config):
-
-    buffer = Buffer(
-        buffer_size=config.buffer_size,
-        device=None
-    )
+def experience_replay(Base):
 
     class ExperienceReplay(Base):
-        def __init__(self, backbone, config=None, loggers=None):
-            super().__init__(backbone, config, loggers)
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
 
-            self.buffer = buffer
-            self.minibatch_size = config.minibatch_size
+            self.buffer = Buffer(
+                buffer_size=self.config.plugin["buffer_size"],
+                device=None
+            )
+            
+            self.minibatch_size = self.config.plugin["minibatch_size"]
 
         def training_step(self, batch, batch_idx):
             images, tasks, transformed = batch[0], batch[1], batch[2]

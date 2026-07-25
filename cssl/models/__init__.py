@@ -6,7 +6,6 @@ from cssl.models.swav import SwAV
 from cssl.models.simsiam import SimSiam
 from cssl.models.vicreg import VICReg
 from cssl.models.dino import DINO
-from cssl.models.base_classifier import BaseClassifier
 from cssl.models.linear_classifier import LinearClassifier
 from cssl.models.online_linear_classifier import OnlineLinearClassifier
 from cssl.models.knn_classifier import KNNClassifier

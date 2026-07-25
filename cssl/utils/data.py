@@ -256,9 +256,6 @@ def get_pretrain_transform(config):
             cj_sat=config.saturation,
             cj_hue=config.hue,
         )
-
-
-
     else:
         assert 0
     return transform
