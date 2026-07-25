@@ -7,7 +7,7 @@ from torch import Tensor
 
 from lightly.utils.benchmarking import knn_predict
 
-from cssl.models.base_classifier import BaseClassifier
+from cssl.downstream.base_classifier import BaseClassifier
 
 class KNNClassifier(
     LightlyKNNClassifier,

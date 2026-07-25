@@ -11,7 +11,7 @@ from lightly.utils.benchmarking.topk import mean_topk_accuracy
 from lightly.utils.benchmarking import OnlineLinearClassifier as LightlyOnlineLinearClassifier
 from lightly.models.utils import deactivate_requires_grad
 from lightly.utils.scheduler import CosineWarmupScheduler
-from cssl.models.base_classifier import BaseClassifier
+from cssl.downstream.base_classifier import BaseClassifier
 
 
 class OnlineLinearClassifier(
@@ -19,16 +19,20 @@ class OnlineLinearClassifier(
     BaseClassifier
 ):
     def __init__(self, *args, **kwargs):
-        self.metrics_logger = kwargs.pop("logger", None)
-        self.num_tasks = kwargs.pop("num_tasks", None)
-        backbone = kwargs.pop("backbone", None)
-        lr = kwargs.pop("lr", None)
-        batch_size_per_device = kwargs.pop("batch_size_per_device", None)
         self.config = kwargs.pop("config", None)
+        backbone = kwargs.pop("backbone", None)
         self.classifier_name = "OnlineLinearClassifier"
+        self.metrics_logger = kwargs.pop("logger", None)
+        kwargs["feature_dim"] = self.config.model.feature_dim
+        kwargs["num_classes"] = self.config.dataset.num_classes
         super().__init__(*args, **kwargs)
-        
+
         self.backbone = backbone
+
+        self.num_tasks = self.config.dataset.num_tasks
+        lr = self.config.optimizer["classifier_learning_rate"]
+        batch_size_per_device = self.config.test_batch_size
+        
         if self.backbone is not None:
             self.backbone.eval()
             deactivate_requires_grad(self.backbone)
@@ -38,9 +42,9 @@ class OnlineLinearClassifier(
         
     def shared_step(self, batch, batch_idx) -> Tuple[Tensor, Dict[int, Tensor]]:
         if self.backbone is None:
-            features, targets, tasks = batch[0], batch[1], batch[2]
+            features, targets = batch[0], batch[1]
         else:
-            images, targets, tasks = batch[0], batch[1], batch[2]
+            images, targets = batch[0], batch[1]
             features = self.backbone(images)
             
         predictions = self.forward(features)

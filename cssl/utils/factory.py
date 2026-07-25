@@ -1,9 +1,10 @@
 import os
+from omegaconf import OmegaConf
 import torch
 import lightly
 
 def get_model(backbone, config, loggers):
-    name = config.model.lower()
+    name = config.model.name.lower()
     if name == "classifier":
         from cssl.models import OnlineLinearClassifier
         Model = OnlineLinearClassifier
@@ -38,7 +39,7 @@ def get_model(backbone, config, loggers):
         from cssl.models import DINO
         Model = DINO
 
-    if isinstance(config.plugin, str):
+    if OmegaConf.select(config, "plugin") is not None:
         plugin_name = config.plugin["name"].lower()
         if plugin_name == "experience_replay":
             from cssl.plugins import experience_replay
@@ -60,7 +61,17 @@ def get_backbone(name, dataset_name):
 
     return backbone
 
-    
+def get_checkpoint(model, config, task_id=None, scenario_id=None):
+    model_name = config.model.name.lower()
+    dataset_name = config.dataset.name.lower()
+
+    plugin = "" if OmegaConf.select(config, "plugin") is None else f"{config.plugin.name}"
+    checkpoint_path = f"{model_name}_{dataset_name}{plugin}/{scenario_id}_{task_id}.pth"
+    checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"))
+    model.load_state_dict(checkpoint)
+
+    return model
+
 def get_downstream_task(backbone, config, logger):
     name = config.downstream.lower()
     if name == "classifier":

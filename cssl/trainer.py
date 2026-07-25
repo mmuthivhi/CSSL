@@ -5,12 +5,12 @@ import pytorch_lightning as pl
 from lightly.models.utils import deactivate_requires_grad, activate_requires_grad
 
 from cssl.utils import DataManager, get_callbacks_logger, get_classifier
-from cssl.utils.factory import get_backbone, get_model, get_downstream_task
+from cssl.utils.factory import get_backbone, get_model, get_checkpoint
 from cssl.metrics.logger import get_loggers
 
 class Trainer:
-    def __init__(self, config_path):
-        self.config = self.get_config(config_path)
+    def __init__(self, config):
+        self.config = config
 
         # Get dataset
         self.data_manager = DataManager(config=self.config)
@@ -19,14 +19,16 @@ class Trainer:
         self.loggers = get_loggers(self.config, self.data_manager)
 
         # Get model
-        backbone = get_backbone(self.config.backbone, self.config.dataset)
+        backbone = get_backbone(self.config.backbone, self.config.dataset.name)
         self.model = get_model(backbone, self.config, loggers=self.loggers)
 
         # Get plugins
 
 
-    def fit(self):
-         pass
+    def forward(self):
+         for scenario_id in tqdm(self.config.seeds, desc="⏳ Runing Scenerio"):
+                train_classifier_loader = self.data_manager.train_classifier_loader
+                test_classifier_loader = self.data_manager.test_classifier_loader
 
 
     def pretrain(self):
@@ -70,6 +72,7 @@ class Trainer:
                 
 
     def evaluate(self):
+        self.model = get_checkpoint(self.model, self.config, task_id=self.config.task_id, scenario_id=self.config.scenario_id)
         deactivate_requires_grad(self.model.backbone)
 
         _, classifier_wandb_logger = get_callbacks_logger(
@@ -105,16 +108,5 @@ class Trainer:
 
     def setup(self): 
          pass
-    
-    def get_config(self, path):
-        with open(path, 'r') as file:
-            config = yaml.safe_load(file)
 
-        parser = argparse.ArgumentParser(description="Train CSSL models")
-        for key, value in config.items():
-            if isinstance(value, bool):
-                parser.add_argument(f"--{key}", type=bool, default=value)
-            else:
-                parser.add_argument(f"--{key}", type=type(value), default=value)
-        
-        return parser.parse_args()
+

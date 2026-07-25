@@ -1,0 +1,19 @@
+name: "SimCLR"
+
+feature_dim: 512
+hidden_dim: 2048
+output_dim: 256
+num_layers: 2
+projection_batchnorm: False
+
+loss:
+  name: "ntxent"
+  temperature: 0.2
+
+# Augmentations
+gaussian_blur: [0.0, 0.0]
+solarization: [0.0, 0.0]
+brightness: 0.8
+contrast: 0.8
+saturation: 0.8
+hue: 0.2

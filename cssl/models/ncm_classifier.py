@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple, Union
 from lightly.utils.benchmarking.topk import mean_topk_accuracy
 from torch import Tensor
 
-from cssl.models.base_classifier import BaseClassifier
+from cssl.downstream.base_classifier import BaseClassifier
 
 class NCMClassifier(
     LightlyKNNClassifier,

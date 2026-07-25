@@ -1,2 +1,9 @@
+name: "cifar100"
+root: "data/"
+
 image_dim: 32
 num_classes: 100
+num_tasks: 5
+split_strategy: "class"
+
+use_online_classifier: True

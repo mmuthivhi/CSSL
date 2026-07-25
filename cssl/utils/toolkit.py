@@ -1,4 +1,5 @@
 import os
+from omegaconf import OmegaConf
 import numpy as np
 from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar
 from pytorch_lightning.callbacks.progress.rich_progress import RichProgressBarTheme
@@ -6,7 +7,7 @@ from pytorch_lightning.callbacks.progress.rich_progress import RichProgressBarTh
 from pytorch_lightning.loggers import WandbLogger
 from cssl.utils.callbacks import BackboneCheckpoint
 
-def get_callbacks_logger(args, training_type, task_id, scenario_id, project="CSSL"):
+def get_callbacks_logger(config, training_type, task_id, scenario_id, project="CSSL"):
     task_id = task_id+1
 
     if training_type == "pretrain":
@@ -16,8 +17,8 @@ def get_callbacks_logger(args, training_type, task_id, scenario_id, project="CSS
         monitor = "Accuracy"
         mode = "max"
 
-    plugin = "" if args.plugin=="" else f"_{args.plugin}"
-    dirpath = f"checkpoints/{args.model}_{args.dataset}_{args.split_strategy}{plugin}".lower()
+    plugin = "" if OmegaConf.select(config, "plugin") is None else f"{config.plugin.name}"
+    dirpath = f"checkpoints/{config.model.name}_{config.dataset.name}{plugin}".lower()
     if os.path.exists(dirpath) is False:
         os.makedirs(dirpath)
 
@@ -27,9 +28,9 @@ def get_callbacks_logger(args, training_type, task_id, scenario_id, project="CSS
     callbacks.append(PROGRESS_BAR)
     
 
-    if args.wandb:
+    if config.wandb:
         wandb_logger = WandbLogger(
-            name=f"{args.model}_{args.dataset}{plugin}_{training_type}_scenario_{scenario_id}_task_{task_id}/{args.num_tasks}",
+            name=f"{config.model.name}_{config.dataset.name}{plugin}_{training_type}_scenario_{scenario_id}_task_{task_id}/{config.num_tasks}",
             group=f"scenario_{scenario_id}",
             config={"task_id": task_id, "scenario_id": scenario_id},
             log_model=False, 

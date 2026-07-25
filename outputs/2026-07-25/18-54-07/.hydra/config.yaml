@@ -1,0 +1,32 @@
+backbone: resnet18
+dataset: cifar100
+model: simclr
+plugin: None
+train_batch_size: 256
+train_accumulate_grad_batches: 1
+train_epochs: 500
+num_workers: 4
+seeds:
+- 5
+test_batch_size: 128
+test_accumulate_grad_batches: 1
+test_epochs: 100
+optimizer:
+  name: lars
+  train_learning_rate: 0.4
+  classifier_learning_rate: 0.1
+  weight_decay: 1.0e-06
+  momentum: 0.9
+  trust_coefficient: 0.02
+  clip_lr: true
+set_float32_matmul_precision: high
+wandb: true
+wandb_project: CSSL
+num_devices: 1
+gpu_devices:
+- 0
+sync_batchnorm: true
+accelerator: gpu
+strategy: auto
+precision: 16-mixed
+check_val_every_n_epoch: 1

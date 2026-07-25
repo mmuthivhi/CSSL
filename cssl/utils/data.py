@@ -18,12 +18,12 @@ from torch.utils.data.dataset import Dataset, Subset
 class DataManager():
     def __init__(self, config):
 
-        self.num_tasks = config.num_tasks
-        if config.split_strategy == "class":
-            assert config.num_classes % config.num_tasks == 0
-            tasks = torch.randperm(config.num_classes).chunk(config.num_tasks)
+        self.num_tasks = config.dataset.num_tasks
+        if config.dataset.split_strategy == "class":
+            assert config.dataset.num_classes % config.dataset.num_tasks == 0
+            tasks = torch.randperm(config.dataset.num_classes).chunk(config.dataset.num_tasks)
 
-        train_dataset, test_dataset = self.get_dataset(dataset=config.dataset, root=config.dataset_root)
+        train_dataset, test_dataset = self.get_dataset(dataset=config.dataset.name, root=config.dataset.root)
 
         self.train_classifier_loader, self.test_classifier_loader = self.get_classifier_dataloader(train_dataset, test_dataset, config, tasks)
 
@@ -31,7 +31,7 @@ class DataManager():
 
 
     def get_classifier_dataloader(self, train_dataset, test_dataset, config, tasks):
-        train_classifier_transform, test_classifier_transform = self.prepare_transforms(dataset=config.dataset)
+        train_classifier_transform, test_classifier_transform = self.prepare_transforms(dataset=config.dataset.name)
 
         train_classifier_dataset = ClassifierDataset(data=train_dataset, transform=train_classifier_transform, tasks=tasks)
         train_classifier_loader = DataLoader(
@@ -56,8 +56,8 @@ class DataManager():
             task_dataset, _ = self.split_dataset(
                 dataset=train_dataset,
                 task_idx=task_idx,
-                num_tasks=config.num_tasks,
-                split_strategy=config.split_strategy,
+                num_tasks=config.dataset.num_tasks,
+                split_strategy=config.dataset.split_strategy,
                 tasks=tasks
             )
             task_dataset = PretrainDataset(data=task_dataset, transform=pretrain_transform)
@@ -210,28 +210,28 @@ class DataManager():
         return transform
 
 def get_pretrain_transform(config):
-    dataset_name = config.dataset.lower()
-    name = config.model.lower()
+    dataset_name = config.dataset.name.lower()
+    name = config.model.name.lower()
     pretrain_collate_function=None
 
     if dataset_name in ["cifar100"] and name not in ["dino"]:
         from cssl.utils import CifarTransform
         dataset_transform1 = CifarTransform(
-            brightness=config.brightness,
-            contrast=config.contrast,
-            saturation=config.saturation,
-            hue=config.hue,
-            gaussian_prob=config.gaussian_blur[0],
-            solarization_prob=config.solarization[0],
+            brightness=config.model.brightness,
+            contrast=config.model.contrast,
+            saturation=config.model.saturation,
+            hue=config.model.hue,
+            gaussian_prob=config.model.gaussian_blur[0],
+            solarization_prob=config.model.solarization[0],
         )
 
         dataset_transform2 = CifarTransform(
-            brightness=config.brightness,
-            contrast=config.contrast,
-            saturation=config.saturation,
-            hue=config.hue,
-            gaussian_prob=config.gaussian_blur[1],
-            solarization_prob=config.solarization[1],
+            brightness=config.model.brightness,
+            contrast=config.model.contrast,
+            saturation=config.model.saturation,
+            hue=config.model.hue,
+            gaussian_prob=config.model.gaussian_blur[1],
+            solarization_prob=config.model.solarization[1],
         )
 
     if name in ["simclr", "dclw", "byol", "barlowtwins", "mocov2plus", "vicreg", "simsiam"]:
@@ -240,21 +240,21 @@ def get_pretrain_transform(config):
     elif name == "swav":
         from lightly.transforms.multi_crop_transform import MultiCropTranform
         transform = MultiCropTranform(
-            crop_counts=config.crop_counts,
-            crop_sizes=config.crop_sizes,
-            crop_max_scales=config.crop_max_scales,
-            crop_min_scales=config.crop_min_scales,
+            crop_counts=config.model.crop_counts,
+            crop_sizes=config.model.crop_sizes,
+            crop_max_scales=config.model.crop_max_scales,
+            crop_min_scales=config.model.crop_min_scales,
             transforms=dataset_transform1,
         )
     elif name == "dino":
         from lightly.transforms.dino_transform import DINOTransform
         transform = DINOTransform(
-            global_crop_size=config.image_dim,
-            local_crop_size=config.local_crop_size,
-            cj_bright=config.brightness,
-            cj_contrast=config.contrast,
-            cj_sat=config.saturation,
-            cj_hue=config.hue,
+            global_crop_size=config.model.image_dim,
+            local_crop_size=config.model.local_crop_size,
+            cj_bright=config.model.brightness,
+            cj_contrast=config.model.contrast,
+            cj_sat=config.model.saturation,
+            cj_hue=config.model.hue,
         )
     else:
         assert 0

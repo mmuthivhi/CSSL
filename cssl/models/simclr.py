@@ -12,15 +12,15 @@ class SimCLR(BaseSSL):
         super().__init__(backbone, config, *args, **kwargs)
 
         self.projection_head = SimCLRProjectionHead(
-            input_dim=config.feature_dim, 
-            hidden_dim=config.hidden_dim, 
-            output_dim=config.output_dim,
-            num_layers=config.num_layers,
-            batch_norm=config.projection_batchnorm,
+            input_dim=config.model.feature_dim, 
+            hidden_dim=config.model.hidden_dim, 
+            output_dim=config.model.output_dim,
+            num_layers=config.model.num_layers,
+            batch_norm=config.model.projection_batchnorm,
         )
 
         self.criterion = NTXentLoss(
-            temperature=config.loss["temperature"],
+            temperature=config.model.loss["temperature"],
             gather_distributed=True,
         )
 
@@ -35,8 +35,11 @@ class SimCLR(BaseSSL):
         view0, view1, targets = batch[0], batch[1], batch[2]
         batch_size = view0.shape[0]
 
-        z0 = self.forward(view0)["projection"]
-        z1 = self.forward(view1)["projection"]
+        output0 = self.forward(view0)
+        output1 = self.forward(view1)
+
+        z0 = output0["projection"]
+        z1 = output1["projection"]
 
         loss = self.criterion(z0, z1)
         z0 = torch.nn.functional.normalize(z0, dim=1)
@@ -45,9 +48,9 @@ class SimCLR(BaseSSL):
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True, batch_size=batch_size)
         self.log("representation_std", representation_std, on_step=True, on_epoch=True, prog_bar=True, logger=True, batch_size=batch_size)
 
-        if self.config.use_online_classifier:
+        if self.config.dataset.use_online_classifier:
             online_log = self.online_classifier.training_step(
-                [torch.concat([z0, z1]).detach(), targets.repeat(2)], 
+                [torch.concat([output0["features"], output1["features"]]).detach(), targets.repeat(2)], 
                 batch_index
             )
             online_log['train_online_cls_loss'] = online_log.pop('loss')

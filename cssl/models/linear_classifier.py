@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.optim import SGD, Optimizer
 from lightly.utils.scheduler import CosineWarmupScheduler
 
-from cssl.models import BaseClassifier
+from cssl.downstream import BaseClassifier
 
 class LinearClassifier(
     LightlyLinearClassifier,
