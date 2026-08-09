@@ -8,8 +8,6 @@ from pytorch_lightning.loggers import WandbLogger
 from cssl.utils.callbacks import BackboneCheckpoint
 
 def get_callbacks_logger(config, training_type, task_id, scenario_id, project="CSSL"):
-    task_id = task_id+1
-
     if training_type == "pretrain":
         monitor = "train_loss"
         mode = "min"
@@ -30,7 +28,7 @@ def get_callbacks_logger(config, training_type, task_id, scenario_id, project="C
 
     if config.wandb:
         wandb_logger = WandbLogger(
-            name=f"{config.model.name}_{config.dataset.name}{plugin}_{training_type}_scenario_{scenario_id}_task_{task_id}/{config.num_tasks}",
+            name=f"{config.model.name}_{config.dataset.name}{plugin}_{training_type}_scenario_{scenario_id}_task_{task_id}/{config.dataset.num_tasks}",
             group=f"scenario_{scenario_id}",
             config={"task_id": task_id, "scenario_id": scenario_id},
             log_model=False, 

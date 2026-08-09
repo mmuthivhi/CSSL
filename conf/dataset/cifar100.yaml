@@ -6,4 +6,4 @@ num_classes: 100
 num_tasks: 5
 split_strategy: "class"
 
-use_online_classifier: True
+use_online_classifier: False

@@ -1,0 +1,63 @@
+dataset:
+  name: cifar100
+  root: data/
+  image_dim: 32
+  num_classes: 100
+  num_tasks: 5
+  split_strategy: class
+  use_online_classifier: false
+model:
+  name: SimCLR
+  batch_size: 256
+  accumulate_grad_batches: 1
+  epochs: 500
+  feature_dim: 512
+  hidden_dim: 2048
+  output_dim: 256
+  num_layers: 2
+  projection_batchnorm: false
+  loss:
+    name: ntxent
+    temperature: 0.2
+  optimizer:
+    name: lars
+    learning_rate: 0.4
+    weight_decay: 1.0e-06
+    momentum: 0.9
+    trust_coefficient: 0.02
+    clip_lr: true
+  gaussian_blur:
+  - 0.0
+  - 0.0
+  solarization:
+  - 0.0
+  - 0.0
+  brightness: 0.8
+  contrast: 0.8
+  saturation: 0.8
+  hue: 0.2
+downstream:
+  name: classification
+  batch_size: 128
+  accumulate_grad_batches: 1
+  epochs: 100
+  optimizer:
+    name: sgd
+    learning_rate: 0.1
+    weight_decay: 1.0e-06
+backbone: resnet18
+num_workers: 4
+seeds:
+- 5
+use_online_classifier: true
+set_float32_matmul_precision: high
+wandb: false
+wandb_project: CSSL
+num_devices: 1
+gpu_devices:
+- 0
+sync_batchnorm: true
+accelerator: gpu
+strategy: auto
+precision: 16-mixed
+check_val_every_n_epoch: 1

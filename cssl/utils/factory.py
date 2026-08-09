@@ -52,7 +52,7 @@ def get_model(backbone, config, loggers):
 def get_backbone(name, dataset_name):
     if name.lower() == "resnet18":
         from torchvision.models import resnet18
-        backbone = resnet18(pretrained=False)
+        backbone = resnet18()
 
         if dataset_name.startswith("cifar"):
             backbone.fc = torch.nn.Identity()

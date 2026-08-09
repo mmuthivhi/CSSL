@@ -4,28 +4,13 @@ defaults:
   - dataset: cifar100
   - model: simclr
   - plugin: null
+  - downstream: classification
 
-train_batch_size: 256
-train_accumulate_grad_batches: 1
-train_epochs: 500
 num_workers: 4
 
 seeds: [5]
 
 use_online_classifier: True
-
-test_batch_size: 128
-test_accumulate_grad_batches: 1
-test_epochs: 100
-
-optimizer:
-  name: "lars"
-  train_learning_rate: 0.4
-  classifier_learning_rate: 0.1
-  weight_decay: 1.0e-06
-  momentum: 0.9
-  trust_coefficient: 0.02
-  clip_lr: True
 
 set_float32_matmul_precision: "high"
 

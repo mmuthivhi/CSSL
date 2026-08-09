@@ -1,0 +1,2 @@
+- wandb=False
+- downstream=ncm

@@ -4,6 +4,8 @@ import wandb
 import pytorch_lightning as pl
 from lightly.models.utils import deactivate_requires_grad, activate_requires_grad
 
+import torch
+
 from cssl.utils import DataManager, get_callbacks_logger, get_classifier
 from cssl.utils.factory import get_backbone, get_model, get_checkpoint
 from cssl.metrics.logger import get_loggers
@@ -23,6 +25,8 @@ class Trainer:
         self.model = get_model(backbone, self.config, loggers=self.loggers)
 
         # Get plugins
+        
+        torch.set_float32_matmul_precision(self.config.model.set_float32_matmul_precision)
 
 
     def forward(self):
@@ -48,10 +52,10 @@ class Trainer:
                 )
 
                 trainer = pl.Trainer(
-                    max_epochs=self.config.train_epochs, 
+                    max_epochs=self.config.model.epochs, 
                     accelerator=self.config.accelerator,
                     devices=self.config.gpu_devices,
-                    accumulate_grad_batches=self.config.train_accumulate_grad_batches,
+                    accumulate_grad_batches=self.config.model.accumulate_grad_batches,
                     callbacks=pretrain_callbacks,
                     logger=pretrain_wandb_logger,
                     strategy=self.config.strategy,
@@ -62,8 +66,7 @@ class Trainer:
 
                 trainer.fit(
                     self.model, 
-                    train_dataloaders=pretrain_dataloader, 
-                    val_dataloaders=[train_classifier_loader, test_classifier_loader]
+                    train_dataloaders=pretrain_dataloader
                 )
                 
                 if self.config.wandb:

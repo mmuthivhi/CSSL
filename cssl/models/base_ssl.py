@@ -11,15 +11,12 @@ from cssl.utils import LARS
 #from lightly.utils.lars import LARS
 from torch.optim import SGD
 from lightly.utils.scheduler import CosineWarmupScheduler
+from lightly.utils.debug import std_of_l2_normalized
 
-from lightly.utils.benchmarking.topk import mean_topk_accuracy
-
-from cssl.models.online_linear_classifier import OnlineLinearClassifier
-from cssl.models.knn_classifier import KNNClassifier
-from cssl.models.ncm_classifier import NCMClassifier
+from reptrix import alpha, rankme, lidar
 
 class BaseSSL(LightningModule):
-    def __init__(self, backbone, config=None, loggers=None):
+    def __init__(self, backbone, config, loggers):
         super().__init__()
 
         self.config = config
@@ -30,86 +27,12 @@ class BaseSSL(LightningModule):
 
         self.metrics_loggers = loggers
         self.num_tasks = config.dataset.num_tasks
-
-        if self.config.use_online_classifier:
-            self.online_classifier = OnlineLinearClassifier(
-                config=config,
-                logger=self.metrics_loggers["online_linear"],
-            )
-        
-        # if self.config.use_knn_classifier:
-        #     self.knn_classifier = KNNClassifier(
-        #         model=None,
-        #         config=config,
-        #         num_classes=self.config.num_classes,
-        #         knn_k=self.config.knn_neighbours,
-        #         knn_t=self.config.knn_temperature,
-        #         logger=self.metrics_loggers["knn"],
-        #         num_tasks=self.num_tasks
-        #     )
-
-        # if self.config.use_ncm_classifier:
-        #     self.ncm_classifier = NCMClassifier(
-        #         model=None,
-        #         config=config,
-        #         num_classes=self.config.num_classes,
-        #         logger=self.metrics_loggers["ncm"],
-        #         num_tasks=self.num_tasks
-        #     )
-
-    def setup(self, stage):
-        # if self.config.dataset.use_knn_classifier:
-        #     self.knn_classifier.trainer = self.trainer
-        #     self.knn_classifier.log_dict = self.log_dict
-        # if self.config.dataset.use_ncm_classifier:
-        #     self.ncm_classifier.trainer = self.trainer
-        #     self.ncm_classifier.log_dict = self.log_dict
-        if self.config.use_online_classifier:
-            self.online_classifier.trainer = self.trainer
-            self.online_classifier.log_dict = self.log_dict
-        
-        return super().setup(stage)
     
-    def validation_step(self, batch, batch_idx, dataloader_idx: int = 0): 
-        images, targets, tasks  = batch[0], batch[1], batch[2]
-        features = self.backbone(images).flatten(start_dim=1)
+    def representation_quality(self, features):
+        rme = rankme.get_rankme(features)
+        representation_std = std_of_l2_normalized(features)
+        return rme, representation_std
 
-        if self.config.dataset.use_online_classifier:
-            if dataloader_idx == 1:  # only run on the validation dataloader
-                online_log = self.online_classifier.validation_step((features.detach(), targets, tasks), batch_idx)
-                self.log_dict(online_log, prog_bar=True, sync_dist=True, batch_size=len(targets))
-
-        features = F.normalize(features, dim=1)
-        batch = (features, targets, tasks)
-
-        # if self.config.dataset.use_knn_classifier:
-        #     self.knn_classifier.validation_step(batch, batch_idx, dataloader_idx=dataloader_idx)
-        # if self.config.dataset.use_ncm_classifier:
-        #     self.ncm_classifier.validation_step(batch, batch_idx, dataloader_idx=dataloader_idx)
-
-    
-    def on_validation_epoch_end(self):
-        if not self.trainer.sanity_checking:
-            if self.config.dataset.use_online_classifier:
-                log_dict = self.online_classifier.on_validation_epoch_end()
-                self.log_dict(log_dict, sync_dist=True, prog_bar=True)
-            # if self.config.dataset.use_knn_classifier:
-            #     log_dict = self.knn_classifier.on_validation_epoch_end()
-            #     self.log_dict(log_dict, sync_dist=True, prog_bar=True)
-            # if self.config.dataset.use_ncm_classifier:
-            #     log_dict = self.ncm_classifier.on_validation_epoch_end()
-            #     self.log_dict(log_dict, sync_dist=True, prog_bar=True)
-
-        return super().on_validation_epoch_end()
-    
-    def teardown(self, stage):
-        if self.config.dataset.use_online_classifier:
-            self.online_classifier.teardown(stage)
-        # if self.config.dataset.use_knn_classifier:
-        #     self.knn_classifier.teardown(stage)
-        # if self.config.dataset.use_ncm_classifier:
-        #     self.ncm_classifier.teardown(stage)
-        return super().teardown(stage)
     
     def configure_optimizers(self):
         # Don't use weight decay for batch norm, bias parameters, and classification
@@ -117,30 +40,20 @@ class BaseSSL(LightningModule):
 
         params, params_no_weight_decay = self.get_params()
 
-        if self.config.dataset.use_online_classifier:
-            online_params = self.online_classifier.parameters()
-        else:
-            online_params = []
-
-        if self.config.optimizer["name"]=="lars":
+        if self.config.model.optimizer["name"]=="lars":
             optimizer = LARS([
                     {"name": f"{self.config.model}", "params": params},
                     {
                         "name": f"{self.config.model}_no_weight_decay",
                         "params": params_no_weight_decay,
                         "weight_decay": 0.0,
-                    },
-                    {
-                        "name": "online_classifier",
-                        "params": online_params,
-                        "weight_decay": 0.0,
-                    },
+                    }
                 ], 
                 lr=self.get_effective_lr(),
-                momentum=self.config.optimizer["momentum"], 
-                weight_decay=self.config.optimizer["weight_decay"],
-                trust_coefficient=self.config.optimizer["trust_coefficient"],
-                clip_lr=self.config.optimizer["clip_lr"]
+                momentum=self.config.model.optimizer["momentum"], 
+                weight_decay=self.config.model.optimizer["weight_decay"],
+                trust_coefficient=self.config.model.optimizer["trust_coefficient"],
+                clip_lr=self.config.model.optimizer["clip_lr"]
             )
 
             scheduler = {
@@ -152,24 +65,19 @@ class BaseSSL(LightningModule):
                 "interval": "step",
             }
             
-        elif self.config.optimizer["name"].lower() == "sgd":
+        elif self.config.model.optimizer["name"].lower() == "sgd":
             optimizer = SGD(
                 [
-                    {"name": f"{self.name}", "params": params},
+                    {"name": f"{self.config.model.name}", "params": params},
                     {
-                        "name": f"{self.name}_no_weight_decay",
+                        "name": f"{self.config.model.name}_no_weight_decay",
                         "params": params_no_weight_decay,
                         "weight_decay": 0.0,
-                    },
-                    {
-                        "name": "online_classifier",
-                        "params": self.online_classifier.parameters(),
-                        "weight_decay": 0.0,
-                    },
+                    }
                 ],
                 lr=self.get_effective_lr(),
-                momentum=self.config.optimizer["momentum"],
-                weight_decay=self.config.optimizer["weight_decay"],
+                momentum=self.config.model.optimizer["momentum"],
+                weight_decay=self.config.model.optimizer["weight_decay"],
             )
 
             scheduler = {
@@ -186,4 +94,10 @@ class BaseSSL(LightningModule):
             }
 
         return [optimizer], [scheduler]
+    
+    def get_effective_lr(self) -> float:
+        # Square root learning rate scaling improves performance for small
+        # batch sizes (<=2048) and few training epochs (<=200). Alternatively,
+        return self.config.model.optimizer["learning_rate"] * math.sqrt(self.config.model.batch_size * self.trainer.world_size)
+    
                 

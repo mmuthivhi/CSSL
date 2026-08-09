@@ -32,7 +32,7 @@ class BaseClassifier(LightningModule):
                 task_predicted_labels = predicted_labels[mask]
                 task_targets = targets[mask]
 
-                log_dict[f"{self.classifier_name} Task {task_idx+1} Data"] = np.mean(task_predicted_labels == task_targets)
+                log_dict[f"{self.name} Task {task_idx+1} Data"] = np.mean(task_predicted_labels == task_targets)
 
             if self.metrics_logger is not None:
                 self.continual_logger(
@@ -41,14 +41,14 @@ class BaseClassifier(LightningModule):
                     tasks=tasks, 
                     split="val"
                 )
-                log_dict[f"{self.classifier_name} Accuracy"] = self.metrics_logger.accuracy
-                log_dict[f"{self.classifier_name} Ave. Accuracy"] = self.metrics_logger.average_accuracy
-                log_dict[f"{self.classifier_name} AIC"] = self.metrics_logger.average_incremental_accuracy
-                log_dict[f"{self.classifier_name} BWT"] = self.metrics_logger.backward_transfer
-                log_dict[f"{self.classifier_name} FWT"] = self.metrics_logger.forward_transfer
-                log_dict[f"{self.classifier_name} PBWT"] = self.metrics_logger.positive_backward_transfer
-                log_dict[f"{self.classifier_name} Remembering"] = self.metrics_logger.remembering
-                log_dict[f"{self.classifier_name} Forgetting"] = self.metrics_logger.forgetting
+                log_dict[f"{self.name} Accuracy"] = self.metrics_logger.accuracy
+                log_dict[f"{self.name} Ave. Accuracy"] = self.metrics_logger.average_accuracy
+                log_dict[f"{self.name} AIC"] = self.metrics_logger.average_incremental_accuracy
+                log_dict[f"{self.name} BWT"] = self.metrics_logger.backward_transfer
+                log_dict[f"{self.name} FWT"] = self.metrics_logger.forward_transfer
+                log_dict[f"{self.name} PBWT"] = self.metrics_logger.positive_backward_transfer
+                log_dict[f"{self.name} Remembering"] = self.metrics_logger.remembering
+                log_dict[f"{self.name} Forgetting"] = self.metrics_logger.forgetting
 
                 self.metrics_logger.end_epoch()
             

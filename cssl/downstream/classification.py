@@ -9,14 +9,14 @@ class Classification(
     BaseClassifier
 ):
     def __init__(self, backbone, config, loggers):
-        self.classifier_name = "Linear"
+        self.name = "Linear"
         
         kwargs = {
             "model": backbone,
-            "num_classes": config.num_classes,
-            "feature_dim": config.feature_dim,
-            "lr": config.optimizer["classifier_learning_rate"],
-            "batch_size_per_device": config.test_batch_size,
+            "num_classes": config.dataset.num_classes,
+            "feature_dim": config.model.feature_dim,
+            "lr": config.model.optimizer["learning_rate"],
+            "batch_size_per_device": config.downstream.batch_size,
         }
         
         self.config = config

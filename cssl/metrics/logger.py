@@ -15,9 +15,9 @@ import pytorch_lightning as pl
 from lightly.models.utils import deactivate_requires_grad
 from lightly.utils.benchmarking import LinearClassifier
 
-from cssl.models import OnlineLinearClassifier
-from cssl.models import KNNClassifier
-from cssl.models import NCMClassifier
+#from cssl.models import OnlineLinearClassifier
+#from cssl.models import KNNClassifier
+#from cssl.models import NCMClassifier
 
 from rich import print
 
@@ -239,46 +239,50 @@ def get_loggers(config, data_manager):
     return loggers   
 
 def get_loggers_classifier(config, data_manager):
-    backbone = resnet18(pretrained=False)
-    backbone.fc = torch.nn.Identity()
-    backbone.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=2, bias=False)
-    backbone.maxpool = torch.nn.Identity()
-    deactivate_requires_grad(backbone)
+    # backbone = resnet18(pretrained=False)
+    # backbone.fc = torch.nn.Identity()
+    # backbone.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=2, bias=False)
+    # backbone.maxpool = torch.nn.Identity()
+    # deactivate_requires_grad(backbone)
     
-    plugin = "" if config.plugin=="" else f"_{config.plugin}"
-    if not os.path.exists(f"logs/{config.model}_linear_{config.dataset}{plugin}_{config.num_tasks}"):
-        os.makedirs(f"logs/{config.model}_linear_{config.dataset}{plugin}_{config.num_tasks}")
+    # plugin = "" if OmegaConf.select(config, "plugin") is None else f"{config.plugin.name}"
+    # if not os.path.exists(f"logs/{config.model.name}_linear_{config.dataset.name}{plugin}_{config.dataset.num_tasks}"):
+    #     os.makedirs(f"logs/{config.model.name}_linear_{config.dataset.name}{plugin}_{config.dataset.num_tasks}")
     
-    linear_classifier = OnlineLinearClassifier(
-        backbone=backbone,
-        batch_size_per_device=config.test_batch_size,
-        lr=config.optimizer["classifier_learning_rate"],
-        feature_dim=config.feature_dim,
-        num_classes=config.num_classes,
-        num_tasks=config.num_tasks,
-        config=config
-    )
+    # linear_classifier = OnlineLinearClassifier(
+    #     backbone=backbone,
+    #     batch_size_per_device=config.test_batch_size,
+    #     lr=config.optimizer["classifier_learning_rate"],
+    #     feature_dim=config.model.feature_dim,
+    #     num_classes=config.dataset.num_classes,
+    #     num_tasks=config.dataset.num_tasks,
+    #     config=config
+    # )
     
-    print("[bold magenta]LINEAR: Evaluating random initialization accuracies...[/bold magenta]")
-    trainer = pl.Trainer(
-        max_epochs=config.test_epochs, 
-        accelerator=config.accelerator,
-        devices=config.gpu_devices,
-        enable_checkpointing=False,
-        strategy=config.strategy,
-        precision=config.precision,
-        sync_batchnorm=config.sync_batchnorm,
-        logger=False
-    )
-    trainer.fit(linear_classifier, data_manager.train_classifier_loader, data_manager.test_classifier_loader)
-    results = trainer.callback_metrics
-    random_init_accuracies = [
-        results[f"OnlineLinearClassifier Task {task_id+1} Data"].item() for task_id in range(config.num_tasks)
-    ]
+    # print("[bold magenta]LINEAR: Evaluating random initialization accuracies...[/bold magenta]")
+    # trainer = pl.Trainer(
+    #     max_epochs=config.test_epochs, 
+    #     accelerator=config.accelerator,
+    #     devices=config.gpu_devices,
+    #     enable_checkpointing=False,
+    #     strategy=config.strategy,
+    #     precision=config.precision,
+    #     sync_batchnorm=config.sync_batchnorm,
+    #     logger=False
+    # )
+    # trainer.fit(linear_classifier, data_manager.train_classifier_loader, data_manager.test_classifier_loader)
+    # results = trainer.callback_metrics
+    # random_init_accuracies = [
+    #     results[f"OnlineLinearClassifier Task {task_id+1} Data"].item() for task_id in range(config.dataset.num_tasks)
+    # ]
+
+    random_init_accuracies = [0 for _ in range(config.dataset.num_tasks)]
+
+    plugin = "" if OmegaConf.select(config, "plugin") is None else f"{config.plugin.name}"
     classifier_logger = Logger(
         random_init_accuracies=random_init_accuracies,
         list_keywords=["performance"],
-        root_log=f"logs/{config.model}_online_linear_{config.dataset}{plugin}_{config.num_tasks}"
+        root_log=f"logs/{config.model.name}_online_linear_{config.dataset.name}{plugin}_{config.dataset.num_tasks}"
     )
     
     return classifier_logger

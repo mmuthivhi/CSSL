@@ -25,8 +25,8 @@ class DataManager():
 
         train_dataset, test_dataset = self.get_dataset(dataset=config.dataset.name, root=config.dataset.root)
 
-        self.train_classifier_loader, self.test_classifier_loader = self.get_classifier_dataloader(train_dataset, test_dataset, config, tasks)
 
+        self.train_classifier_loader, self.test_classifier_loader = self.get_classifier_dataloader(train_dataset, test_dataset, config, tasks)
         self.pretrain_dataloaders = self.get_pretrain_dataloaders(train_dataset, tasks, config)
 
 
@@ -36,14 +36,14 @@ class DataManager():
         train_classifier_dataset = ClassifierDataset(data=train_dataset, transform=train_classifier_transform, tasks=tasks)
         train_classifier_loader = DataLoader(
             train_classifier_dataset, 
-            batch_size=config.test_batch_size, 
+            batch_size=config.downstream.batch_size, 
             num_workers=config.num_workers, 
             shuffle=True
         )
         test_classifier_dataset = ClassifierDataset(data=test_dataset, transform=test_classifier_transform, tasks=tasks)
         test_classifier_loader = DataLoader(
             test_classifier_dataset, 
-            batch_size=config.test_batch_size, 
+            batch_size=config.downstream.batch_size, 
             num_workers=config.num_workers, 
             shuffle=False
         )
@@ -63,7 +63,7 @@ class DataManager():
             task_dataset = PretrainDataset(data=task_dataset, transform=pretrain_transform)
             pretrain_dataloader = DataLoader(
                 task_dataset, 
-                batch_size=config.test_batch_size, 
+                batch_size=config.model.batch_size, 
                 num_workers=config.num_workers, 
                 shuffle=True
             )

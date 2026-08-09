@@ -1,0 +1,10 @@
+name: "classification"
+
+batch_size: 128
+accumulate_grad_batches: 1
+epochs: 100
+
+optimizer:
+  name: "sgd"
+  learning_rate: 0.1
+  weight_decay: 1.0e-06
