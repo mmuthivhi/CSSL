@@ -1,0 +1,9 @@
+name: "stl10"
+root: "data/"
+
+image_dim: 96
+num_classes: 10
+num_tasks: 5
+split_strategy: "class"
+
+use_online_classifier: False

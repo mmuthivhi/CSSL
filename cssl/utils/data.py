@@ -8,7 +8,7 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, Unio
 
 from cssl.dataset import PretrainDataset, ClassifierDataset
 
-from torchvision.datasets import CIFAR100, MNIST
+from torchvision.datasets import CIFAR100, MNIST, STL10, Imagenette
 from continuum import ClassIncremental
 from continuum.generators import ClassOrderGenerator
 
@@ -79,6 +79,12 @@ class DataManager():
         elif dataset == "mnist":
             train_dataset = MNIST(root, download=True, train=True)
             test_dataset = MNIST(root, download=True, train=False)
+        elif dataset == "stl10":
+            train_dataset = STL10(root, download=True, split="train")
+            test_dataset = STL10(root, download=True, split="test")
+        elif dataset == "imagenette":
+            train_dataset = Imagenette(root, download=True, split="train")
+            test_dataset = Imagenette(root, download=True, split="val")
 
         return train_dataset, test_dataset
 
